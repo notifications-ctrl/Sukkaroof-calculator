@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rooflight Weight Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface2: #eaecf0;
+    --border: #d0d5dd;
+    --accent: #b8860b;
+    --accent2: #1d6fd8;
+    --text: #1a1f2e;
+    --muted: #6b7280;
+    --danger: #d9352a;
+    --success: #1a7f37;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Layout ──────────────────────────────────────── */
+  .top-row {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+    align-items: start;
+    margin-bottom: 20px;
+  }
+
+  .inputs-panel .toggle-row {
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+  }
+
+  .headline-results {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  .headline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 110px;
+  }
+
+  .headline-card--primary {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+
+  .headline-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .headline-value {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+
+  .headline-value span:first-child {
+    font-family: 'DM Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .headline-card--primary .headline-value span:first-child {
+    color: var(--accent);
+  }
+
+  .headline-unit {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem !important;
+    color: var(--muted) !important;
+    font-weight: 400 !important;
+  }
+
+  .detail-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  @media (max-width: 800px) {
+    .top-row { grid-template-columns: 1fr; }
+    .headline-results { grid-template-columns: 1fr; }
+    .detail-row { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+  }
+
+  .panel-header-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .panel-title {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .panel-body { padding: 20px; }
+
+  /* Inputs */
+  .input-group {
+    margin-bottom: 20px;
+  }
+
+  .input-group:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 8px;
+  }
+
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .input-wrapper:focus-within {
+    border-color: var(--accent);
+  }
+
+  input[type="number"] {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.4rem;
+    padding: 12px 14px;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .unit {
+    padding: 0 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    background: var(--surface2);
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    border-left: 1px solid var(--border);
+    letter-spacing: 0.1em;
+  }
+
+  /* Derived */
+  .derived-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  .derived-row:last-child { border-bottom: none; }
+
+  .derived-label {
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+  }
+
+  .derived-value {
+    font-family: 'DM Mono', monospace;
+    color: var(--accent2);
+  }
+
+  /* Results */
+  .result-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+
+  .result-row:last-child { border-bottom: none; }
+
+  .result-label {
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-size: 0.95rem;
+  }
+
+  .result-amt {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .result-weight {
+    font-family: 'DM Mono', monospace;
+    text-align: right;
+    color: var(--text);
+    min-width: 70px;
+    white-space: nowrap;
+  }
+
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    padding: 10px 0 4px;
+  }
+
+  /* Total weight */
+  .total-box {
+    margin-top: 20px;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .total-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+
+  .total-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 2rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .total-unit {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+
+  /* Components table */
+  .components-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .components-table th {
+    text-align: left;
+    padding: 6px 8px;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .components-table th:last-child { text-align: right; }
+
+  .components-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .components-table td:last-child { text-align: right; color: var(--text); }
+  .components-table td:first-child { color: var(--text); }
+
+  .components-table tr:last-child td { border-bottom: none; }
+
+  .warning {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(244,112,103,0.1);
+    border: 1px solid rgba(244,112,103,0.3);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--danger);
+    line-height: 1.5;
+  }
+
+  .warning.hidden { display: none; }
+
+  .cols-header {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    padding: 0 0 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+  }
+
+  .col-h {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .col-h:not(:first-child) { text-align: right; }
+
+  /* Toggle switch */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .toggle-row:hover { background: #222b38; }
+
+  .toggle-row.active {
+    background: rgba(91,156,246,0.08);
+    border-top-color: rgba(91,156,246,0.3);
+  }
+
+  .toggle-label-wrap { display: flex; flex-direction: column; gap: 2px; }
+
+  .toggle-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .toggle-name.active { color: var(--accent2); }
+
+  .toggle-desc {
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+  }
+
+  .toggle-switch {
+    width: 40px; height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .toggle-switch.on { background: var(--accent2); }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+
+  .toggle-switch.on::after { transform: translateX(18px); }
+
+  /* Anti-noise row in results */
+  .result-row.antinoise-row {
+    display: none;
+  }
+  .result-row.antinoise-row.visible {
+    display: grid;
+  }
+
+  /* Single lid total box */
+  .lid-total-box {
+    margin-top: 8px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .lid-total-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+
+  .lid-total-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.35rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .lid-total-unit {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-left: 3px;
+  }
+
+  /* ── Gas Strut Section ─────────────────────────────── */
+
+  /* Parameter display rows */
+  .strut-param-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 0 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+
+  .strut-param-row:last-child { border-bottom: none; }
+
+  .strut-param-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .strut-param-sub {
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 2px;
+  }
+
+  .strut-param-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--accent2);
+    grid-column: 2;
+    grid-row: 1 / 3;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .strut-param-val em {
+    font-style: normal;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  /* Results */
+  .strut-result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .strut-result-row:last-child { border-bottom: none; }
+
+  .strut-result-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .strut-result-label small {
+    display: block;
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .strut-result-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    text-align: right;
+  }
+
+  .strut-total-box {
+    margin-top: 14px;
+    background: var(--bg);
+    border: 1px solid rgba(63, 185, 80, 0.5);
+    border-radius: 6px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .strut-total-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+
+  .strut-total-sub {
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .strut-total-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.6rem;
+    color: var(--success);
+    font-weight: 500;
+  }
+
+  .strut-per-box {
+    margin-top: 10px;
+    background: rgba(63,185,80,0.06);
+    border: 1px solid rgba(63,185,80,0.2);
+    border-radius: 6px;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .strut-per-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.25rem;
+    color: var(--success);
+    opacity: 0.8;
+  }
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">// Weight Calculator</div>
+    <h1>Openable <span>Rooflight</span></h1>
+    <p class="subtitle">Lid weight, assembly weight &amp; gas strut force calculator</p>
+  </header>
+
+  <!-- ── TOP: Inputs + Headline Results ─────────────── -->
+  <div class="top-row">
+
+    <!-- Inputs: dimensions + toggle in one panel -->
+    <div class="panel inputs-panel">
+      <div class="panel-header">
+        <div class="panel-header-dot"></div>
+        <span class="panel-title">Inputs</span>
+      </div>
+      <div class="panel-body">
+        <div class="input-group">
+          <label>Length</label>
+          <div class="input-wrapper">
+            <input type="number" id="length" value="3500" step="1" min="1">
+            <span class="unit">mm</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Width</label>
+          <div class="input-wrapper">
+            <input type="number" id="width" value="2600" step="1" min="1">
+            <span class="unit">mm</span>
+          </div>
+        </div>
+      </div>
+      <div id="toggle-antinoise" class="toggle-row" onclick="toggleAntiNoise()">
+        <div class="toggle-label-wrap">
+          <span class="toggle-name" id="toggle-name">Anti-noise Skin</span>
+          <span class="toggle-desc">Adds anti-noise poly · uses FLA112</span>
+        </div>
+        <div class="toggle-switch" id="toggle-switch"></div>
+      </div>
+    </div>
+
+    <!-- Headline results -->
+    <div class="headline-results">
+      <div class="headline-card">
+        <div class="headline-label">Single Lid Weight</div>
+        <div class="headline-value"><span id="h-lid">—</span><span class="headline-unit">kg</span></div>
+      </div>
+      <div class="headline-card headline-card--primary">
+        <div class="headline-label">Total Assembly Weight</div>
+        <div class="headline-value"><span id="h-total">—</span><span class="headline-unit">kg</span></div>
+      </div>
+      <div class="headline-card">
+        <div class="headline-label">Force Per Strut</div>
+        <div class="headline-value"><span id="h-fper">—</span><span class="headline-unit">N</span></div>
+      </div>
+    </div>
+
+  </div><!-- /top-row -->
+
+  <!-- ── BOTTOM: Detail ──────────────────────────────── -->
+  <div class="detail-row">
+
+    <!-- Weight breakdown -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-dot" style="background:var(--success)"></div>
+        <span class="panel-title">Weight Breakdown</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="section-label">Lid Components (per lid)</div>
+        <div class="cols-header">
+          <span class="col-h">Item</span>
+          <span class="col-h">Qty</span>
+          <span class="col-h">Weight kg</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Aluminium</span>
+          <span class="result-amt" id="r-ali-amt">—</span>
+          <span class="result-weight" id="r-ali-wt">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Polycarb</span>
+          <span class="result-amt" id="r-poly-amt">—</span>
+          <span class="result-weight" id="r-poly-wt">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Flashing <span id="fla-label" style="font-size:0.7rem;color:var(--muted)">(FLA102)</span></span>
+          <span class="result-amt" id="r-flash-amt">—</span>
+          <span class="result-weight" id="r-flash-wt">—</span>
+        </div>
+        <div class="result-row antinoise-row" id="row-antinoise">
+          <span class="result-label" style="color:var(--accent2)">Anti-noise Poly</span>
+          <span class="result-amt" id="r-an-amt">—</span>
+          <span class="result-weight" id="r-an-wt" style="color:var(--accent2)">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Bits</span>
+          <span class="result-amt">fixed</span>
+          <span class="result-weight">2.00 kg</span>
+        </div>
+
+        <div class="lid-total-box">
+          <span class="lid-total-label">Single Lid</span>
+          <div>
+            <span class="lid-total-value" id="r-lid-total">—</span>
+            <span class="lid-total-unit">kg</span>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:14px">Assembly (×2 lids + structure)</div>
+        <div class="cols-header">
+          <span class="col-h">Item</span>
+          <span class="col-h"></span>
+          <span class="col-h">Weight kg</span>
+        </div>
+
+        <div class="result-row">
+          <span class="result-label">Lids × 2</span>
+          <span class="result-amt"></span>
+          <span class="result-weight" id="r-lids2">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Base Legs × 2</span>
+          <span class="result-amt" id="r-legs-amt">—</span>
+          <span class="result-weight" id="r-legs-wt">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Apex × 2</span>
+          <span class="result-amt" id="r-apex-amt">—</span>
+          <span class="result-weight" id="r-apex-wt">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Gutter</span>
+          <span class="result-amt"></span>
+          <span class="result-weight" id="r-gutter">—</span>
+        </div>
+
+        <div class="total-box">
+          <div><div class="total-label">Total Assembly Weight</div></div>
+          <div>
+            <span class="total-value" id="r-total">—</span>
+            <span class="total-unit">kg</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right column: strut + derived + components -->
+    <div>
+
+      <!-- Gas strut detail -->
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-header">
+          <div class="panel-header-dot" style="background:var(--success)"></div>
+          <span class="panel-title">Gas Strut Calculation</span>
+        </div>
+        <div class="panel-body">
+          <div class="strut-result-row">
+            <div class="strut-result-label">Door Force<small>door weight × 9.81</small></div>
+            <span class="strut-result-val" id="sr-fdoor">—</span>
+          </div>
+          <div class="strut-result-row">
+            <div class="strut-result-label">Theoretical Total Force<small>F_door × CG dist ÷ (strut dist × sin 21°)</small></div>
+            <span class="strut-result-val" id="sr-ftheo">—</span>
+          </div>
+          <div class="strut-result-row">
+            <div class="strut-result-label">After Correction Factor<small>× 1.056 (5.6%)</small></div>
+            <span class="strut-result-val" id="sr-fadj">—</span>
+          </div>
+          <div class="strut-total-box">
+            <div>
+              <div class="strut-total-label">Total Required Strut Force</div>
+              <div class="strut-total-sub">across 2 struts</div>
+            </div>
+            <div>
+              <span class="strut-total-val" id="sr-ftotal">—</span>
+              <span style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--muted);margin-left:3px">N</span>
+            </div>
+          </div>
+          <div class="strut-per-box">
+            <div>
+              <div class="strut-total-label">Force Per Strut</div>
+              <div class="strut-total-sub">minimum rated strut force</div>
+            </div>
+            <div>
+              <span class="strut-per-val" id="sr-fper">—</span>
+              <span style="font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--muted);margin-left:3px">N</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strut parameters -->
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-header">
+          <div class="panel-header-dot" style="background:var(--muted)"></div>
+          <span class="panel-title">Strut Parameters</span>
+        </div>
+        <div class="panel-body">
+          <div class="strut-param-row">
+            <span class="strut-param-label">Door Weight</span>
+            <span class="strut-param-sub">single lid</span>
+            <span class="strut-param-val"><span id="sp-doorwt">—</span> <em>kg</em></span>
+          </div>
+          <div class="strut-param-row">
+            <span class="strut-param-label">CG Distance</span>
+            <span class="strut-param-sub">½ poly width</span>
+            <span class="strut-param-val"><span id="sp-cgdist">—</span> <em>mm</em></span>
+          </div>
+          <div class="strut-param-row">
+            <span class="strut-param-label">Gravity</span>
+            <span class="strut-param-sub">standard constant</span>
+            <span class="strut-param-val">9.81 <em>m/s²</em></span>
+          </div>
+          <div class="strut-param-row">
+            <span class="strut-param-label">Strut Mount Distance</span>
+            <span class="strut-param-sub">hinge to mounting point</span>
+            <span class="strut-param-val">470 <em>mm</em></span>
+          </div>
+          <div class="strut-param-row">
+            <span class="strut-param-label">Opening Angle</span>
+            <span class="strut-param-sub">at rated position</span>
+            <span class="strut-param-val">21 <em>deg</em></span>
+          </div>
+          <div class="strut-param-row">
+            <span class="strut-param-label">Number of Struts</span>
+            <span class="strut-param-sub">per door</span>
+            <span class="strut-param-val">2</span>
+          </div>
+          <div class="strut-param-row">
+            <span class="strut-param-label">Correction Factor</span>
+            <span class="strut-param-sub">design margin</span>
+            <span class="strut-param-val">5.6 <em>%</em></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Derived values -->
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-header">
+          <div class="panel-header-dot" style="background:var(--accent2)"></div>
+          <span class="panel-title">Derived Values</span>
+        </div>
+        <div class="panel-body">
+          <div class="derived-row">
+            <span class="derived-label">Poly Length</span>
+            <span class="derived-value" id="d-polylen">—</span>
+          </div>
+          <div class="derived-row">
+            <span class="derived-label">Poly Width</span>
+            <span class="derived-value" id="d-polywid">—</span>
+          </div>
+          <div class="derived-row">
+            <span class="derived-label">Poly Area</span>
+            <span class="derived-value" id="d-polyarea">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Component reference -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-header-dot" style="background:var(--muted)"></div>
+          <span class="panel-title">Component Weights / m²</span>
+        </div>
+        <div class="panel-body" style="padding:12px 16px">
+          <table class="components-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th style="text-align:right">kg/m²</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Aluminium</td><td>1.65</td></tr>
+              <tr><td>25mm Polycarb</td><td>3.40</td></tr>
+              <tr><td>FLA 102</td><td>0.93</td></tr>
+              <tr><td>FLA112</td><td>0.99</td></tr>
+              <tr><td>Silicone</td><td>2.00</td></tr>
+              <tr><td>Steel flat &amp; flash</td><td>31.40</td></tr>
+              <tr><td>Anti-noise poly</td><td>1.70</td></tr>
+            </tbody>
+          </table>
+          <div class="warning" id="unused-warning">
+            ⚠ FLA112 and Anti-noise poly are used when Anti-noise Skin is enabled. Silicone remains unused.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /detail-row -->
+
+</div><!-- /container -->
+
+<script>
+  const G2 = 1.65;   // Ali
+  const G3 = 3.40;   // 25mm poly
+  const G4 = 0.93;   // FLA 102
+  const G5 = 0.99;   // FLA112
+  const G7 = 31.4;   // Steel flat and flash
+  const G8 = 1.70;   // Anti-noise poly
+
+  let antiNoise = false;
+
+  function toggleAntiNoise() {
+    antiNoise = !antiNoise;
+    const sw = document.getElementById('toggle-switch');
+    const row = document.getElementById('toggle-antinoise');
+    const name = document.getElementById('toggle-name');
+    sw.classList.toggle('on', antiNoise);
+    row.classList.toggle('active', antiNoise);
+    name.classList.toggle('active', antiNoise);
+    calculate();
+  }
+
+  function fmt(n, dp=3) { return n.toFixed(dp); }
+
+  function calculate() {
+    const A3 = (parseFloat(document.getElementById('length').value) || 0) / 1000;
+    const B3 = (parseFloat(document.getElementById('width').value) || 0) / 1000;
+
+    // Derived
+    const polyLen  = A3 + 0.12;
+    const polyWid  = ((B3 / 2 - 0.077) / 0.933) + 0.128;
+    const polyArea = polyLen * polyWid;
+
+    document.getElementById('d-polylen').textContent  = fmt(polyLen, 4) + ' m';
+    document.getElementById('d-polywid').textContent  = fmt(polyWid, 4) + ' m';
+    document.getElementById('d-polyarea').textContent = fmt(polyArea, 4) + ' m²';
+
+    // Flashing: FLA102 normally, FLA112 with anti-noise
+    const flashRate = antiNoise ? G5 : G4;
+    document.getElementById('fla-label').textContent = antiNoise ? '(FLA112)' : '(FLA102)';
+    document.getElementById('fla-label').style.color = antiNoise ? 'var(--accent2)' : 'var(--muted)';
+
+    // Lid components
+    const aliAmt   = ((A3 + 0.12) * 2) + (((B3 / 2 - 0.07) / 0.933 + 0.128) * 3);
+    const aliWt    = aliAmt * G2;
+    const polyWt   = polyArea * G3;
+    const flashAmt = (polyLen + polyWid) * 2;
+    const flashWt  = flashAmt * flashRate;
+    const bitsWt   = 2;
+
+    // Anti-noise
+    const anWt = antiNoise ? polyArea * G8 : 0;
+
+    // Show/hide anti-noise row
+    document.getElementById('row-antinoise').classList.toggle('visible', antiNoise);
+    document.getElementById('r-an-amt').textContent = fmt(polyArea, 4) + ' m²';
+    document.getElementById('r-an-wt').textContent  = fmt(anWt, 2) + ' kg';
+
+    const lidTotal = aliWt + polyWt + flashWt + bitsWt + anWt;
+
+    document.getElementById('r-ali-amt').textContent   = fmt(aliAmt, 3) + ' m';
+    document.getElementById('r-ali-wt').textContent    = fmt(aliWt, 2) + ' kg';
+    document.getElementById('r-poly-amt').textContent  = fmt(polyArea, 4) + ' m²';
+    document.getElementById('r-poly-wt').textContent   = fmt(polyWt, 2) + ' kg';
+    document.getElementById('r-flash-amt').textContent = fmt(flashAmt, 3) + ' m';
+    document.getElementById('r-flash-wt').textContent  = fmt(flashWt, 2) + ' kg';
+    document.getElementById('r-lid-total').textContent = fmt(lidTotal, 2);
+    document.getElementById('h-lid').textContent        = fmt(lidTotal, 2);
+
+    // Assembly
+    const lids2   = lidTotal * 2;
+    const legsAmt = A3 * 280 * 3.14 / 100;
+    const legsWt  = legsAmt * 2;
+    const apexAmt = B3 * 0.48 * G7;
+    const apexWt  = apexAmt * 2;
+    const gutter  = (A3 + 100) * 10.43 / 100;
+    const total   = lids2 + legsWt + apexWt + gutter;
+
+    document.getElementById('r-lids2').textContent    = fmt(lids2, 2) + ' kg';
+    document.getElementById('r-legs-amt').textContent = fmt(legsAmt, 3);
+    document.getElementById('r-legs-wt').textContent  = fmt(legsWt, 2) + ' kg';
+    document.getElementById('r-apex-amt').textContent = fmt(apexAmt, 3);
+    document.getElementById('r-apex-wt').textContent  = fmt(apexWt, 2) + ' kg';
+    document.getElementById('r-gutter').textContent   = fmt(gutter, 2) + ' kg';
+    document.getElementById('r-total').textContent     = fmt(total, 2);
+    document.getElementById('h-total').textContent     = fmt(total, 2);
+
+    // ── Gas Strut Calculation (all constants, fully automatic) ──
+    const S_G        = 9.81;
+    const S_DSTRUT   = 470;        // mm
+    const S_ANGLE    = 21 * Math.PI / 180;  // radians
+    const S_NSTRUTS  = 2;
+    const S_CF       = 1.056;      // 5.6% correction factor
+
+    const dCG   = (polyWid / 2) * 1000;   // mm, derived from poly width
+    const fDoor = lidTotal * S_G;
+    const fTheo = fDoor * dCG / (S_DSTRUT * Math.sin(S_ANGLE));
+    const fAdj  = fTheo * S_CF;
+    const fPer  = fAdj / S_NSTRUTS;
+
+    document.getElementById('sp-doorwt').textContent  = fmt(lidTotal, 3);
+    document.getElementById('sp-cgdist').textContent  = fmt(dCG, 1);
+    document.getElementById('sr-fdoor').textContent   = fmt(fDoor, 2) + ' N';
+    document.getElementById('sr-ftheo').textContent   = fmt(fTheo, 2) + ' N';
+    document.getElementById('sr-fadj').textContent    = fmt(fAdj, 2) + ' N';
+    document.getElementById('sr-ftotal').textContent  = fmt(fAdj, 1);
+    document.getElementById('sr-fper').textContent    = fmt(fPer, 1);
+    document.getElementById('h-fper').textContent     = fmt(fPer, 1);
+  }
+
+  document.getElementById('length').addEventListener('input', calculate);
+  document.getElementById('width').addEventListener('input', calculate);
+
+  calculate();
+</script>
+</body>
+</html>
